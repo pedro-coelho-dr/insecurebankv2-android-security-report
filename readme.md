@@ -7,6 +7,32 @@
 https://github.com/dineshshetty/Android-InsecureBankv2
 
 
+## Getting started
+
+### MobSF
+
+```bash
+docker pull opensecurity/mobile-security-framework-mobsf:latest
+```
+```bash
+docker run -it --rm -p 8000:8000 opensecurity/mobile-security-framework-mobsf:latest
+```
+```bash
+https://localhost:8000
+```
+
+### Genymotion
+
+### Burp Suite
+
+### ADB
+
+### Jadx
+
+### Frida
+
+### Objection
+
 ## Tools
 - **[Mobile Security Framework (MobSF)](https://github.com/MobSF/Mobile-Security-Framework-MobSF)**
 - **[VirusTotal](https://www.virustotal.com/)**
