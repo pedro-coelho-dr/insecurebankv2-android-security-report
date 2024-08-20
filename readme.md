@@ -1,6 +1,6 @@
 # Mobile Application Security Report: InsecureBankv2
 
-{{REPORT}}
+### [Report](report.md)
 
 ## Summary
 
@@ -11,6 +11,8 @@ https://github.com/dineshshetty/Android-InsecureBankv2
 
 ### MobSF
 
+Run locally:
+
 ```bash
 docker pull opensecurity/mobile-security-framework-mobsf:latest
 ```
@@ -19,6 +21,12 @@ docker run -it --rm -p 8000:8000 opensecurity/mobile-security-framework-mobsf:la
 ```
 ```bash
 https://localhost:8000
+```
+
+Alternatively, run online:
+
+```bash
+https://mobsf.live/
 ```
 
 ### Genymotion

@@ -10,17 +10,14 @@
     - [3.1 Reconnaissance](#31-reconnaissance)
       - [MobSF Overview](#mobsf-overview)
       - [VirusTotal Overview](#virustotal-overview)
-    - [3.2 Static Analysis](#32-static-analysis)
-      - [MobSF Static Analysis](#mobsf-static-analysis)
-      - [Jadx Static Analysis](#jadx-static-analysis)
-    - [3.3 Dynamic Analysis](#33-dynamic-analysis)
-      - [Burp Suite](#burp-suite)
-      - [Android Debug Bridge (ADB)](#android-debug-bridge-adb)
-    - [3.4 Exploitation](#34-exploitation)
+      - [MobSF Analysis](#mobsf-analysis)
+      - [Jadx Analysis](#jadx-analysis)
+    - [3.4 Exploration](#34-exploration)
     - [3.5 Reporting](#35-reporting)
     - [3.6 Tools](#36-tools)
   - [4. Executive Summary](#4-executive-summary)
   - [5. Vulnerabilities](#5-vulnerabilities)
+    - [5.1](#51)
   - [Author](#author)
 
 ## 1. Objective
@@ -41,9 +38,7 @@ https://github.com/dineshshetty/Android-InsecureBankv2
 
 ![alt text](img/virustotal-overview.png)
 
-### 3.2 Static Analysis
-
-#### MobSF Static Analysis
+#### MobSF Analysis
 
 - Applications Permissions: 
     ```
@@ -67,29 +62,45 @@ https://github.com/dineshshetty/Android-InsecureBankv2
 - APKiD Analysis
   - The application employs anti-VM techniques `Build.MODEL check, Build.MANUFACTURER check, Build.PRODUCT check` to detect if it is running in a virtualized environment, potentially complicating analysis by automated tools or in an emulated environment. Additionally, the `dexmerge` manipulations indicate that the DEX files have likely undergone some form of compilation or merging process, which could obfuscate the app's behavior and make reverse engineering more challenging.
 
+#### Jadx Analysis
 
+### 3.4 Exploration
 
-#### Jadx Static Analysis
-
-### 3.3 Dynamic Analysis
-
-#### Burp Suite
-
-#### Android Debug Bridge (ADB)
-
-### 3.4 Exploitation
+- Burp, ADB, Mobsf Dynamic Analysis
 
 ### 3.5 Reporting
 
 ### 3.6 Tools
 - **[Mobile Security Framework (MobSF)](https://github.com/MobSF/Mobile-Security-Framework-MobSF)**
 - **[VirusTotal](https://www.virustotal.com/)**
+- **[Genymotion Desktop](https://docs.genymotion.com/desktop/)**
+- **[ADB (Android Debug Bridge)](https://developer.android.com/studio/command-line/adb)**
+-  CyberChef
+- **[Kali Linux](https://www.kali.org/)**
 - **[Docker](https://www.docker.com/)**
 - **[VSCode](https://code.visualstudio.com/)**
+
 
 ## 4. Executive Summary
 
 ## 5. Vulnerabilities
+- Debbugin Enabled
+- Allow Backup
+
+
+
+- **HARDCODED CREDENTIALS**  
+![alt text](image.png)
+
+
+- **LOGIN**  
+![alt text](image-3.png)
+![alt text](image-5.png)
+USER  
+![alt text](image-4.png)
+PASSWORD    
+![alt text](image-2.png)
+
 
 ### 5.1 
 
