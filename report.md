@@ -60,6 +60,9 @@ The objective of this penetration test was to identify security vulnerabilities 
 
 The scope of the pentest was limited to the InsecureBankV2 Android application and its associated network communications. Testing included static analysis of the app’s code and configurations, dynamic analysis of its runtime behavior, and network traffic analysis. The assessment excluded any external systems or third-party integrations outside of the application itself.
 
+{{ ADD ENVIROMENT INFO HERE }}  
+{{ refers to README.md }}
+
 ## 6. Reconnaissance
 
 MobSF Analysis
@@ -125,10 +128,17 @@ During static analysis using Jadx, the following code snippet was identified:
 **Impact**  
 Unauthorized access to the application is possible without authentication, allowing complete control over user data and app functionality. This flaw severely compromises the security of the system.
 
+**CVSS v4.0 Score**  
+9.3 / Critical  
+```
+CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+```
+
 **Mitigation**  
 Remove the hardcoded credentials and replace them with secure storage mechanisms, such as environment variables or encrypted storage. Ensure proper authentication processes are enforced for all users.
 
 ### 8.2 Debuggin Enabled
+
 
 **Description**  
 
@@ -144,8 +154,15 @@ Remove the hardcoded credentials and replace them with secure storage mechanisms
 
 **Impact**  
 
+**CVSS v4.0 Score**  
+ 
+```
+```
 
 **Mitigation**  
+
+
+
 
 
 ### 8.3 Allow Backup
@@ -164,6 +181,10 @@ Remove the hardcoded credentials and replace them with secure storage mechanisms
 
 **Impact**  
 
+**CVSS v4.0 Score**  
+ 
+```
+```
 
 **Mitigation**  
 
@@ -171,6 +192,7 @@ Remove the hardcoded credentials and replace them with secure storage mechanisms
 
 
 ### 8.4 Insufficient Cryptography
+
 
 **Description**  
 
@@ -186,8 +208,15 @@ Remove the hardcoded credentials and replace them with secure storage mechanisms
 
 **Impact**  
 
+**CVSS v4.0 Score**  
+ 
+```
+```
 
 **Mitigation**  
+
+
+
 
 
 ![alt text](img/adb-sharedpref-crypto.png)
