@@ -12,8 +12,8 @@
   - [8. Vulnerabilities](#8-vulnerabilities)
     - [8.1 Improper Credential Usage: Hardcoded Backdoor Account](#81-improper-credential-usage-hardcoded-backdoor-account)
     - [8.2 Debuggin Enabled](#82-debuggin-enabled)
-    - [8.3 Allow](#83-allow)
-    - [8.4 Insufficient  Cryptography](#84-insufficient--cryptography)
+    - [8.3 Allow Backup](#83-allow-backup)
+    - [8.4 Insufficient Cryptography](#84-insufficient-cryptography)
 
 ## 1. Introduction
 
@@ -94,7 +94,7 @@ MobSF Analysis
   
 Jadx Analysis
 
-![alt text](image-6.png)
+![alt text](img/jadx-sourcecode-treelist.png)
 
 
 ## 7. Executive Summary
@@ -109,36 +109,93 @@ Jadx Analysis
 
 ### 8.1 Improper Credential Usage: Hardcoded Backdoor Account
 
+**Description**  
+The app contains a hardcoded backdoor account using the username `devamin`, which allows login without a password. This vulnerability arises from the application’s improper credential management, where a specific condition in the code bypasses normal authentication.
 
-During the analysis of the InsecureBankV2 Android app, a critical issue was identified where a hardcoded backdoor account with the username devamin allows login without a password. The vulnerability occurs due to improper credential management in the code, where a specific condition checks if the username equals devamin and bypasses the normal authentication process. This exposes the application to unauthorized access and compromises the security of the system.
+**Evidence**  
+During static analysis using Jadx, the following code snippet was identified:
+![alt text](img/jadx-sourcecode-devadmin.png)
 
-CWE-798: Use of Hard-coded Credentials
-Impact:
-An attacker with knowledge of the hardcoded username devamin can gain unauthorized access to the application without any authentication, leading to a complete breach of confidentiality and potential exploitation of the app's features and data. This poses a severe security risk, as it effectively negates the authentication mechanism.
+**OWASP Mobile Top 10 Reference**  
+[M1: Improper Credential Usage](https://owasp.org/www-project-mobile-top-10/2023-risks/m1-improper-credential-usage.html)
 
-Evidence:
-The vulnerability was identified during static code analysis using Jadx. The following code snippet illustrates the issue:
+**CWE Reference**  
+[CWE-798: Use of Hard-coded Credentials](https://cwe.mitre.org/data/definitions/798.html)
 
+**Impact**  
+Unauthorized access to the application is possible without authentication, allowing complete control over user data and app functionality. This flaw severely compromises the security of the system.
 
-![alt text](image.png)
-
-This snippet shows that the presence of the username 'devamin' bypasses the need for a password, leading to direct access.
-
-Mitigation:
-Remove all hardcoded credentials from the source code. Instead, use secure mechanisms for credential storage and retrieval, such as environment variables or secure storage solutions. Ensure that authentication processes are properly enforced for all user accounts.
-
+**Mitigation**  
+Remove the hardcoded credentials and replace them with secure storage mechanisms, such as environment variables or encrypted storage. Ensure proper authentication processes are enforced for all users.
 
 ### 8.2 Debuggin Enabled
 
-### 8.3 Allow
+**Description**  
 
-### 8.4 Insufficient  Cryptography
-![alt text](image-3.png)
-![alt text](image-5.png)
+
+**Evidence**  
+
+
+**OWASP Mobile Top 10 Reference**  
+[]()
+
+**CWE Reference**  
+[]()
+
+**Impact**  
+
+
+**Mitigation**  
+
+
+### 8.3 Allow Backup
+
+**Description**  
+
+
+**Evidence**  
+
+
+**OWASP Mobile Top 10 Reference**  
+[]()
+
+**CWE Reference**  
+[]()
+
+**Impact**  
+
+
+**Mitigation**  
+
+
+
+
+### 8.4 Insufficient Cryptography
+
+**Description**  
+
+
+**Evidence**  
+
+
+**OWASP Mobile Top 10 Reference**  
+[]()
+
+**CWE Reference**  
+[]()
+
+**Impact**  
+
+
+**Mitigation**  
+
+
+![alt text](img/adb-sharedpref-crypto.png)
+![alt text](img/jadx-cryptoclass.png)
 USER  
-![alt text](image-4.png)
+![alt text](img/cybefchef-user.png)
 PASSWORD    
-![alt text](image-2.png)
+![alt text](img/cyberchef-pass.png)
 
 
 ---
