@@ -14,8 +14,9 @@
     - [8.2 Debugging Enabled](#82-debugging-enabled)
     - [8.3 Allow Backup Enabled](#83-allow-backup-enabled)
     - [8.4 Weak Cryptography in User Data Storage](#84-weak-cryptography-in-user-data-storage)
-    - [8.5](#85)
+    - [8.5 Bypass of Root Detection](#85-bypass-of-root-detection)
     - [8.6](#86)
+    - [8.7](#87)
 
 ## 1. Introduction
 
@@ -48,6 +49,8 @@ The vulnerabilities are presented with the following structure: *Title, Descript
 - **[Genymotion Desktop](https://docs.genymotion.com/desktop/)**
 - **[Jadx](https://github.com/skylot/jadx)**
 - **[ADB (Android Debug Bridge)](https://developer.android.com/studio/command-line/adb)**
+- **[Frida](https://frida.re/)
+- **[Objection](https://github.com/sensepost/objection)
 - **[CyberChef](https://gchq.github.io/CyberChef/)**
 - **[Kali Linux](https://www.kali.org/)**
 - **[Docker](https://www.docker.com/)**
@@ -157,10 +160,9 @@ During static analysis using Jadx, the following code snippet was found in the `
 An attacker can attach a debugger to the app, inspect and modify its runtime behavior, access sensitive data, and bypass security controls, putting the app and user data at significant risk.kal
 
 **CVSS v4.0 Score**  
-4.8 / Medium
+5.1 / Medium
 ```
-CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N
-
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N
 ```
 **Mitigation**  
  Ensure that the `android:debuggable` flag is set to `false` for production releases. The following line should be added or modified in the `AndroidManifest.xml`:
@@ -194,9 +196,9 @@ You can further verify this by running the following ADB command:
 An attacker who gains access to the device or ADB can extract and analyze the backup of the app, leading to the exposure of sensitive user information, including login credentials, private files, and cached data.
 
 **CVSS v4.0 Score**  
- 6.9 / Medium
+ 7.0 / High
 ```
-CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
@@ -264,7 +266,78 @@ Utilize Android's EncryptedSharedPreferences for securely storing sensitive info
 Eliminate hardcoded keys from the codebase to prevent easy decryption and exposure of sensitive data by attackers.
 
 
-### 8.5
+### 8.5 Bypass of Root Detection
+
+**Description** 
+
+The InsecureBankV2 application implements a basic root detection mechanism in the `PostLogin` activity by checking the existence of the su binary and the Superuser.apk file. This detection can be easily bypassed using tools such as Frida and Objection. By dynamically hooking and modifying the return values of the `doesSUexist()` and `doesSuperuserApkExist()` methods, the app can be tricked into believing that the device is not rooted.
+
+
+**Evidence**  
+
+- Application Displays Rooted Status  
+Before the bypass, the application detects that the device is rooted and displays the message `Rooted Device!!`.  
+
+  ![alt text](img/app-rooted.png)
+- Root Detection Code in Jadx  
+The root detection logic is implemented in the PostLogin activity and is based on checking the existence of the su binary and Superuser.apk file.  
+  ![alt text](img/jadx-postlogin-root.png)
+
+- Frida Server Running  
+The Frida server is successfully running on the device, allowing runtime hooking of methods for bypassing the root detection.  
+  ![alt text](img/frida-server-running.png)
+
+- Objection Command for Root Detection Bypass  
+Using Objection, the root detection checks were bypassed by setting the return values of the doesSUexist() and doesSuperuserApkExist() methods to false.
+
+
+
+```bash
+objection -g com.android.insecurebankv2 explore
+```
+
+`android hooking set return_value <class.method> <value>`
+```bash
+android hooking set return_value com.android.insecurebankv2.PostLogin.doesSUexist false
+android hooking set return_value com.android.insecurebankv2.PostLogin.doesSuperuserApkExist false
+```
+![alt text](img/objection-unroot.png)
+
+- Application Displays Not Rooted Status
+After bypassing the root detection, the application now displays the message `Device not Rooted!!`, indicating that the root detection has been successfully disabled.
+![alt text](img/app-not-rooted.png)
+
+**OWASP Mobile Top 10 Reference**  
+[M7: Insufficient Binary Protection](https://owasp.org/www-project-mobile-top-10/2023-risks/m7-insufficient-binary-protection.html)
+
+**CWE Reference**  
+[CWE-489: Active Debug Code](https://cwe.mitre.org/data/definitions/489.html)
+[CWE-602: Client-Side Enforcement of Server-Side Security](https://cwe.mitre.org/data/definitions/602.html)
+
+
+**Impact**  
+By bypassing root detection, attackers gain full access to the application’s features on a rooted device, leading to increased risks of data exposure, tampering, and reverse engineering. Rooted devices provide deep access to the system and app data, which would normally be protected. When root detection is bypassed, attackers can:
+
+- Extract sensitive data
+- Modify the app or alter its behavior
+- Circumvent security measures that protect the app in non-rooted environments
+- Exploit other vulnerabilities more easily due to elevated privileges
+  
+The primary concern is that bypassing root detection allows attackers to operate with the privileges of a rooted device, while the application remains unaware and continues to function as though it were in a secure, non-rooted environment.
+
+**CVSS v4.0 Score**  
+8.4 / High
+```
+CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+```
+
+**Mitigation**  
+- Stronger Root Detection: Use advanced root detection techniques like or approaches that check system integrity, detect root management tools, and look for tampering with system files.
+- Server-Side Enforcement: Implement server-side validation to enforce security measures and monitor for tampering or bypass attempts, ensuring security remains intact even if client-side detection is bypassed.
+- Tamper Detection: Add tamper-detection mechanisms to detect runtime manipulation or debugging, preventing tools from altering app behavior.
+- Monitor and Respond: Monitor app behavior for anomalies. Upon detecting tampering, trigger a response like logging the user out or disabling functionality.
+
+### 8.6
 
 **Description**  
 
@@ -290,7 +363,7 @@ Eliminate hardcoded keys from the codebase to prevent easy decryption and exposu
 **Mitigation**  
 
 
-### 8.6
+### 8.7
 
 **Description**  
 
