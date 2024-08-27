@@ -378,7 +378,7 @@ Burp Suite was used to intercept HTTP traffic from the application. During testi
 
 - Captured Data: The intercepted traffic revealed user credentials and other data being transmitted without encryption.
 
-  ![alt text](img/burp-request-responsepng)  
+  ![alt text](img/burp-request-response.png)  
 
 
 **OWASP Mobile Top 10 Reference**  
