@@ -16,11 +16,15 @@
     - [8.4 Weak Cryptography in User Data Storage](#84-weak-cryptography-in-user-data-storage)
     - [8.5 Bypass of Root Detection](#85-bypass-of-root-detection)
     - [8.6  Insecure HTTP Connections](#86--insecure-http-connections)
-    - [8.7 Improper Access Control on Password Change](#87-improper-access-control-on-password-change)
-    - [8.8 Enumeration of Usernames via Endpoints](#88-enumeration-of-usernames-via-endpoints)
-    - [8.9 Bypassing Login to Access PostLogin Activity Directly](#89-bypassing-login-to-access-postlogin-activity-directly)
-    - [8.10](#810)
-    - [8.11](#811)
+    - [8.7  Plaintext Transmission of Sensitive Information](#87--plaintext-transmission-of-sensitive-information)
+    - [8.8 Improper Access Control on Password Change](#88-improper-access-control-on-password-change)
+    - [8.9 Enumeration of Usernames via Endpoints](#89-enumeration-of-usernames-via-endpoints)
+    - [8.10 Bypassing Login to Access PostLogin Activity Directly](#810-bypassing-login-to-access-postlogin-activity-directly)
+    - [8.11 Binary Patching](#811-binary-patching)
+    - [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation)
+    - [CERTIFICATE PINNING](#certificate-pinning)
+    - [EMULATOR DETECTION](#emulator-detection)
+    - [JAVASCRIPT CODE IN external storage for VIEW STATEMENT](#javascript-code-in-external-storage-for-view-statement)
 
 ## 1. Introduction
 
@@ -55,6 +59,9 @@ The vulnerabilities are presented with the following structure: *Title, Descript
 - **[ADB (Android Debug Bridge)](https://developer.android.com/studio/command-line/adb)**
 - **[Frida](https://frida.re/)**
 - **[Objection](https://github.com/sensepost/objection)**
+- [Apktool]
+- [keytool]
+- [apksigner]
 - **[CyberChef](https://gchq.github.io/CyberChef/)**
 - **[Burp Suite](https://portswigger.net/burp)**
 - **[Kali Linux](https://www.kali.org/)**
@@ -324,7 +331,7 @@ Using Objection, the root detection checks were bypassed by setting the return v
   android hooking set return_value com.android.insecurebankv2.PostLogin.doesSuperuserApkExist false
   ```  
   ![alt text](img/objection-unroot.png)
-
+S
 - Application Displays Not Rooted Status
 After bypassing the root detection, the application now displays the message `Device not Rooted!!`, indicating that the root detection has been successfully disabled.  
 
@@ -363,12 +370,11 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ### 8.6  Insecure HTTP Connections
 
 **Description**  
-The application communicates with the server using the insecure HTTP protocol rather than HTTPS. This leaves the transmitted data, including login credentials and other sensitive information, vulnerable to interception and modification by attackers through man-in-the-middle (MITM) attacks. The lack of encryption in HTTP exposes users to significant risks, particularly when transferring sensitive data such as authentication credentials or financial information.
+The application communicates with the server using the insecure HTTP protocol instead of HTTPS. This lack of encryption leaves all data transmitted between the client and the server vulnerable to interception by attackers via man-in-the-middle (MITM) attacks. Using HTTP without encryption compromises the confidentiality and integrity of the data, including non-sensitive information, increasing the overall security risk of the application.
 
-To facilitate the interception of HTTPS traffic as well, a Burp Suite CA certificate was installed on the Android emulator. This allowed Burp Suite to act as a trusted intermediary, enabling the interception and decryption of HTTPS traffic for analysis.
 
 **Evidence**  
-Burp Suite was used to intercept HTTP traffic from the application. During testing, the login credentials were transmitted in plaintext, allowing them to be viewed and potentially altered by an attacker.
+Using Burp Suite, the HTTP traffic between the application and the server was intercepted. The traffic was transmitted without any encryption, allowing it to be easily captured and analyzed.
 
 - Setup: A manual proxy was configured in the emulator’s WiFi settings, directing traffic through Burp Suite. The Burp Suite CA certificate was installed on the device to allow interception of HTTPS traffic. HTTP traffic was intercepted and analyzed, revealing the unencrypted transmission of sensitive data.
 
@@ -376,7 +382,7 @@ Burp Suite was used to intercept HTTP traffic from the application. During testi
 
   ![alt text](img/app-setup-proxy.png)  
 
-- Captured Data: The intercepted traffic revealed user credentials and other data being transmitted without encryption.
+- Captured HTTP Traffic: The traffic intercepted was entirely unencrypted, exposing all transmitted data.
 
   ![alt text](img/burp-request-response.png)  
 
@@ -389,7 +395,7 @@ Burp Suite was used to intercept HTTP traffic from the application. During testi
 
 
 **Impact**  
-An attacker can intercept and manipulate the unencrypted HTTP traffic, leading to potential data theft, user impersonation, or unauthorized access to sensitive information. This vulnerability poses a critical risk to the application's security, especially in public or untrusted networks.
+An attacker intercepting this traffic can gain access to users' credentials, leading to potential account compromises, identity theft, and unauthorized access to sensitive user data.
 
 **CVSS v4.0 Score**  
 9.3 / Critical
@@ -399,13 +405,47 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
-- Switch to HTTPS: All communications between the app and the server should be encrypted using the HTTPS protocol. This ensures that sensitive data is protected in transit and reduces the risk of interception.  
+- Switch to HTTPS: Ensure all communications between the app and the server are encrypted using the HTTPS protocol.  
+- Regularly Monitor and Enforce Security Standards: Continuously monitor network communications for compliance with security protocols.
 
-- Certificate Pinning: Implement certificate pinning to ensure the application communicates only with trusted servers, preventing MITM attacks even when attackers have access to the network.  
 
-- Regularly Monitor and Enforce Security Standards: Continuously monitor network communications for compliance with security protocols and enforce secure transmission standards across all endpoints.
+### 8.7  Plaintext Transmission of Sensitive Information
 
-### 8.7 Improper Access Control on Password Change
+**Description**  
+The application transmits sensitive information, such as usernames and passwords, over the network in plaintext. This vulnerability allows attackers to intercept these credentials easily if they gain access to the network, especially in scenarios where the network is unsecured, such as public Wi-Fi. Even if HTTPS is not implemented, the transmission of sensitive information in plaintext exacerbates the risk.
+
+
+**Evidence**  
+During network traffic analysis with Burp Suite, the login credentials were intercepted and found to be transmitted in plaintext over the HTTP protocol.
+
+- Captured Login Request: The intercepted request clearly shows the username and password being transmitted without any encryption.
+
+  ![alt text](img/burp-request-response.png)  
+
+
+**OWASP Mobile Top 10 Reference**  
+[M5: Insecure Communication](https://owasp.org/www-project-mobile-top-10/2023-risks/m5-insecure-communication.html)
+
+**CWE Reference**  
+[CWE-319: Cleartext Transmission of Sensitive Information](https://cwe.mitre.org/data/definitions/319.html)
+
+
+**Impact**  
+An attacker intercepting this traffic can gain access to users' credentials, leading to potential account compromises, identity theft, and unauthorized access to sensitive user data.
+
+**CVSS v4.0 Score**  
+9.3 / Critical
+
+```
+CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+```
+
+**Mitigation**  
+- Encrypt Sensitive Data: Always encrypt sensitive information before transmission, ideally by using HTTPS.  
+
+- Implement Secure Communication Practices: Enforce secure coding practices that prevent sensitive information from being sent in plaintext.
+
+### 8.8 Improper Access Control on Password Change
 
 **Description**  
 The application allows users to change another user's password by simply knowing their username. This vulnerability arises due to the lack of proper access control in the `/changepassword` endpoint. The application does not verify the identity of the user initiating the password change request, allowing any authenticated user to change the password of another user by sending a specially crafted request with the target's username.
@@ -447,7 +487,7 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 - Require Current Password: Enforce a policy where users must provide their current password to change their password, reducing the risk of unauthorized changes.  
   
 
-### 8.8 Enumeration of Usernames via Endpoints
+### 8.9 Enumeration of Usernames via Endpoints
 
 **Description**  
 The application is vulnerable to username enumeration through `/login` and other endpoints. An attacker can determine whether a username is valid by observing the server's responses to login attempts and password change requests. This issue becomes critical when combined with the password change vulnerability, allowing an attacker to identify valid usernames and then reset their passwords without the need for further credentials.
@@ -488,7 +528,7 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 - Account Lockout: Introduce account lockout mechanisms after multiple failed attempts.  
 - Multi-Factor Authentication: Implement MFA to protect accounts even if a username is compromised.  
 
-### 8.9 Bypassing Login to Access PostLogin Activity Directly
+### 8.10 Bypassing Login to Access PostLogin Activity Directly
 
 **Description**  
 The application allows an attacker to bypass authentication and directly access sensitive activities, such as `PostLogin`, by using simple ADB commands. This vulnerability arises because the app does not enforce proper access control on activities, leaving them accessible even without proper authentication. Using static analysis with Jadx, it was observed that other activities, such as `LoginActivity` `DoTransfer`, `ViewStatement`, and `ChangePassword`, also lack proper access restrictions.
@@ -534,55 +574,108 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 - Prevent External Access: Secure all activities by preventing them from being launched externally through ADB or other methods unless proper permissions are verified.
 
 
-### 8.10
+### 8.11 Binary Patching
 
 **Description**  
 
-
+The application was modified through binary patching, where the APK was decompiled, specific code sections were altered, and then recompiled. This allowed for the reinstallation of the modified APK on the Android device, bypassing any integrity checks or security mechanisms. Such modifications can be used to introduce malicious functionality, enable hidden features, or remove security controls.
 
 **Evidence**  
 
+- The APK was decompiled using Apktool:
+
+  ```bash
+  apktool d -r InsecureBankv2.apk
+  ```
+- Specific code was modified to alter the application's behavior, as shown in the decompiled code snippet:
+  
+  ![alt text](img/jadx-hiddenbutton.png)
+
+- The value on the LoginActivity.smali, setVisibility was set to 0x0, making the "Create User" button visible in the application, refer to [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation):
+
+  ![alt text](img/apktool-code.png)
+
+- The modified APK was recompiled and signed with a new key:
+
+  ```bash
+  pktool InsecureBankv2 -o IB-2.apk
+
+  keytool -genkey -v -keystore android.keystore -alias keydroid -keyalg RSA -keysize 2048 -validity 10000
+
+  apksigner sign --ks-key-alias keydroid --ks android.keystore ib3.apk
+  ```
+
+- The APK was successfully reinstalled on the emulator, demonstrating the feasibility of this attack.
+
 **OWASP Mobile Top 10 Reference**  
-[]()
+[M7: Insufficient Binary Protection]()
 
 **CWE Reference**  
-[]()
+[CWE-494: Download of Code Without Integrity Check]()
 
 **Impact**  
-
+An attacker with access to the APK file can modify its functionality and repackage it, potentially introducing malicious code or enabling hidden features. This compromises the integrity of the application and poses significant security risks, including data theft, unauthorized access, or the propagation of malware.
 
 **CVSS v4.0 Score**  
-
+8.6 / High
 ```
-
+CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
+- Implement strong integrity checks, such as using a combination of hash validation and certificate pinning, to prevent the installation of modified APKs.
+- Employ obfuscation and anti-tampering techniques to make binary patching more difficult.
+- Monitor for unusual application behavior that may indicate tampering.
 
-### 8.11
+
+### 8.12 Create User Button Activation through Hidden Value Manipulation
 
 **Description**  
 
-
+The application contains a hidden "Create User" feature that is not intended to be accessible by users. However, through manipulation of a hidden value in the APK code, this feature can be activated. Although the feature does not successfully allow the creation of a new user, its presence and potential activation illustrate a significant security vulnerability that could lead to unintended access to application features or expose sensitive operations.
 
 **Evidence**  
 
+- The hidden value controlling the visibility of the "Create User" button was identified and altered in the decompiled APK code, refer to [8.11 Binary Patching](#811-binary-patching), after recompiling and reinstalling the APK, the "Create User" button was made visible in the application:  
+
+  ![alt text](img/app-create-user.png)  
+
+  ![alt text](img/app-createusermsg.png)
+
+- Attempting to create a user resulted in an error, as the feature is not fully functional, but the presence of the button illustrates the potential for feature exposure.
+
+  ![alt text](img/jadx-createusermsg.png)
+
 **OWASP Mobile Top 10 Reference**  
-[]()
+[M1: Improper Platform Usage]()
 
 **CWE Reference**  
-[]()
+[CWE-285: Improper Authorization]()
 
 **Impact**  
-
+The ability to activate hidden features through code manipulation poses a security risk by exposing parts of the application that were not intended for user interaction. This can lead to unintended access to sensitive functions, compromising the security of the application and potentially enabling further exploitation.
 
 **CVSS v4.0 Score**  
-
+6.5 / Medium
 ```
-
+CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:R/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
+- Remove or securely disable any code related to hidden or debug features before deploying the application.
+- Ensure that feature toggles are properly secured and inaccessible through simple code modification or reverse engineering.
+- Regularly audit the application for the presence of unintended features or code paths that should not be accessible in production environments.
+
+
+
+
+### CERTIFICATE PINNING
+
+### EMULATOR DETECTION
+
+### JAVASCRIPT CODE IN external storage for VIEW STATEMENT
+
+https://github.com/micro-joan/BlackStone
 
 
 ---
