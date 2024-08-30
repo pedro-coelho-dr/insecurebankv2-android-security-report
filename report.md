@@ -22,27 +22,30 @@
     - [8.10 Bypassing Login to Access PostLogin Activity Directly](#810-bypassing-login-to-access-postlogin-activity-directly)
     - [8.11 Binary Patching](#811-binary-patching)
     - [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation)
+    - [ADB LOGCAT](#adb-logcat)
     - [CERTIFICATE PINNING](#certificate-pinning)
     - [EMULATOR DETECTION](#emulator-detection)
-    - [JAVASCRIPT CODE IN external storage for VIEW STATEMENT](#javascript-code-in-external-storage-for-view-statement)
+    - [XSS - JAVASCRIPT CODE IN external storage for VIEW STATEMENT sdcard](#xss---javascript-code-in-external-storage-for-view-statement-sdcard)
 
 ## 1. Introduction
 
-This report details the results of a penetration test conducted by **Pedro Coelho** on the **[InsecureBankV2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 August 2024 to {{END}}. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
+This report details the results of a penetration test conducted by **Pedro Coelho** on the **[InsecureBankV2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 to 31 of August, 2024. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
 
 ## 2. Methodology
 
+This methodology is crafted with a focus on the specific needs of the InsecureBankv2 penetration test, drawing upon insights from the [OWASP Mobile Security Testing Guide (MASTG)](https://mas.owasp.org/MASTG/).  By integrating established best practices with custom-tailored techniques, the approach ensures a thorough and effective assessment of the application’s security posture.
+
 **1. Preparation**  
-The scope and objectives for the pentest were defined. Tools including MobSF, Jadx, ADB, and Genymotion were set up. The testing environment was configured with the necessary settings.
+The scope and objectives for the pentest are defined. The testing environment is configured with the necessary settings to support comprehensive analysis.
 
 **2. Reconnaissance**  
-Initial information gathering was conducted using MobSF for both static and dynamic analysis. Permissions, manifest configurations, and potential entry points were examined. VirusTotal was utilized to check file reputations.
+Initial information gathering is conducted to analyze the application's static and dynamic properties. Key areas such as permissions, configurations, and potential entry points are examined. External resources are also consulted to assess the reputation and security status of the application's components.
 
 **3. Exploitation**  
-Vulnerability exploitation was performed using tools such as Burp Suite, ADB, and Frida. These tools were used to analyze network traffic, identify security misconfigurations, and attempt direct exploitation, including bypassing authentication mechanisms.
+The exploitation phase involves actively testing the application by attempting to exploit identified weaknesses. This includes analyzing network traffic for insecure communications, bypassing authentication mechanisms, reverse engineering the code to uncover vulnerabilities, and testing for privilege escalation. The goal is to validate the presence of vulnerabilities and assess their impact on the security of the application.
 
 **4. Reporting**  
-All identified vulnerabilities were documented with supporting evidence. Each vulnerability was linked to relevant OWASP Mobile Top 10 and CWE references, assessed for impact and severity, and assigned a CVSS score. Mitigation steps were provided to guide remediation.
+All identified vulnerabilities are documented with supporting evidence. Each vulnerability is linked to relevant OWASP Mobile Top 10 and CWE references, assessed for impact and severity, and assigned a CVSS score. Mitigation steps are provided to guide remediation.
 
 The vulnerabilities are presented with the following structure: *Title, Description, Evidence, OWASP Mobile Top 10 Reference, CWE Reference, Impact, CVSS Score* and *Mitigation*.
    
@@ -56,14 +59,12 @@ The vulnerabilities are presented with the following structure: *Title, Descript
 - **[VirusTotal](https://www.virustotal.com/)**
 - **[Genymotion Desktop](https://docs.genymotion.com/desktop/)**
 - **[Jadx](https://github.com/skylot/jadx)**
+- **[Burp Suite](https://portswigger.net/burp)**
 - **[ADB (Android Debug Bridge)](https://developer.android.com/studio/command-line/adb)**
 - **[Frida](https://frida.re/)**
 - **[Objection](https://github.com/sensepost/objection)**
-- [Apktool]
-- [keytool]
-- [apksigner]
+- **[Apktool](https://apktool.org/)**
 - **[CyberChef](https://gchq.github.io/CyberChef/)**
-- **[Burp Suite](https://portswigger.net/burp)**
 - **[Kali Linux](https://www.kali.org/)**
 - **[Docker](https://www.docker.com/)**
 - **[VSCode](https://code.visualstudio.com/)**
@@ -71,18 +72,18 @@ The vulnerabilities are presented with the following structure: *Title, Descript
 
 ## 4. Objective
 
-The objective of this penetration test was to identify security vulnerabilities within the InsecureBankV2 Android application. The focus was on assessing the app's security posture through static and dynamic analysis, network communications, and code vulnerabilities. The goal was to provide actionable insights and recommendations to improve the security of the application.
+The objective of this penetration test is to identify and assess security vulnerabilities within the InsecureBankV2 Android application. The assessment focuses on evaluating the app's security posture through comprehensive static and dynamic analysis, examining network communications, and scrutinizing code for potential vulnerabilities. The primary goal is to provide actionable insights and recommendations that enhance the security of the application, safeguard user data, and ensure compliance with industry security standards.
 
 ## 5. Scope
 
-The scope of the pentest was limited to the InsecureBankV2 Android application and its associated network communications. Testing included static analysis of the app’s code and configurations, dynamic analysis of its runtime behavior, and network traffic analysis. The assessment excluded any external systems or third-party integrations outside of the application itself.
+The scope of this penetration test is strictly confined to the InsecureBankV2 Android application and its direct network communications. The testing encompasses static analysis of the application's code and configuration files, dynamic analysis of its runtime behavior, and thorough examination of network traffic. The assessment deliberately excludes any external systems, third-party integrations, or external APIs associated with the application. This focus ensures a targeted evaluation of the application’s internal security mechanisms and data handling practices.
 
 **Environment**  
-- Host Machine: *Windows 11, Intel i7, 32GB RAM.*  
+- Host Machine: *Windows 11, Intel i7, 32GB RAM, with the latest security updates applied.*  
 - Emulator: *Genymotion Desktop Version 3.7.1*, configured to emulate a *Samsung Galaxy S8* with *Android 10.0.*  
-- Network Environment: The Genymotion emulator connects to the internet via the host machine. The InsecureBankV2 app is configured to communicate with an external server using IP and port provided by the instructor. 
+- Network Environment: The Genymotion emulator connected to the internet via the host machine. A manual proxy was configured to route traffic through security testing tools. The InsecureBankV2 app was set up to communicate with an external server using the IP and port provided by the instructor.
 
-For setup details, refer to [readme](./readme.md).
+For more setup details, refer to [readme](./readme.md).
 
 ## 6. Reconnaissance
 
@@ -126,18 +127,18 @@ The MobSF static analysis identified critical security risks within the Insecure
   - **Exported Components**: `PostLogin, DoTransfer, ViewStatement, TrackUserContentProvider` Several critical components are exported, making them accessible to other apps on the device, potentially exposing the app to unauthorized access and security risks.
   - **StrandHogg 2.0 Vulnerability**: `PostLogin, DoTransfer, ViewStatement, ChangePassword` Multiple activities  are vulnerable to task hijacking attacks.
 
-[Full Report](pdf/insecurebankv2.pdf)
+  [Full MobSF Report](pdf/insecurebankv2.pdf)
   
 **Jadx Analysis**
 
 Jadx was used to decompile the APK, revealing hardcoded credentials, encryption implementations, authentication logic, app flow,  permissions and manifest configurations, providing insights into possible vulnerabilities in the app's code.  
 
-![alt text](img/jadx-sourcecode-treelist.png)
+- ![alt text](img/jadx-sourcecode-treelist.png)
 
 **Burp Suite Analysis**  
 Burp Suite was employed to intercept network traffic and analyze HTTP requests made by the app. This provided insight into the app's communication patterns and any potential security weaknesses in the data being transmitted.  
 
-![alt text](img/burp-sitemap.png)
+- ![alt text](img/burp-sitemap.png)
 
 
 ## 7. Executive Summary
@@ -151,8 +152,8 @@ Burp Suite was employed to intercept network traffic and analyze HTTP requests m
 The app contains a hardcoded backdoor account using the username `devamin`, which allows login without a password. This vulnerability arises from the application’s improper credential management, where a specific condition in the code bypasses normal authentication.
 
 **Evidence**  
-During static analysis using Jadx, the following code snippet was identified:
-![alt text](img/jadx-sourcecode-devadmin.png)
+- During static analysis using Jadx, the following code snippet was identified:
+ ![alt text](img/jadx-sourcecode-devadmin.png)
 
 **OWASP Mobile Top 10 Reference**  
 [M1: Improper Credential Usage](https://owasp.org/www-project-mobile-top-10/2023-risks/m1-improper-credential-usage.html)
@@ -211,11 +212,15 @@ This will prevent attackers from attaching a debugger to the application in prod
 The `android:allowBackup` flag is set to `true` in the `AndroidManifest.xml` file. This setting allows the app's data to be backed up via ADB without requiring the user's consent. If an attacker gains access to the device, they can extract the app's private data by using ADB backup functionality, which could result in data leakage or exposure of sensitive information.
 
 **Evidence**  
-During static analysis using Jadx, the following code snippet was found in the `AndroidManifest.xml` file:  
-![alt text](img/jadx-allowbackup.png)  
-You can further verify this by running the following ADB command:  
-![alt text](img/adb-backup1.png)
-![alt text](img/adb-backup2.png)
+- During static analysis using Jadx, the following code snippet was found in the `AndroidManifest.xml` file:  
+  
+  ![alt text](img/jadx-allowbackup.png)  
+
+- You can further verify this by running the following ADB command:   
+  
+  ![alt text](img/adb-backup1.png)
+
+  ![alt text](img/adb-backup2.png)
 
 **OWASP Mobile Top 10 Reference**  
 [M9: Insecure Data Storage](https://owasp.org/www-project-mobile-top-10/2023-risks/m9-insecure-data-storage.html)
@@ -248,7 +253,7 @@ This will prevent the app's data from being backed up by ADB, thereby protecting
 
 
 **Description**  
-The app stores sensitive information such as usernames and passwords in the `mySharedPreferences.xml` using weak encryption. While the data appears encrypted at first glance, further inspection reveals a hardcoded cryptographic key and an insecure implementation of AES (Advanced Encryption Standard) in Cipher Block Chaining (CBC) mode. An attacker with access to the device can easily retrieve and decrypt this data, leading to the exposure of sensitive user information.
+The app stores sensitive information such as usernames and passwords in the `mySharedPreferences.xml` using weak encryption. While the data appears encrypted at first glance, further inspection reveals a hardcoded cryptographic key and an insecure implementation of `AES (Advanced Encryption Standard)` in `Cipher Block Chaining (CBC)` mode. An attacker with access to the device can easily retrieve and decrypt this data, leading to the exposure of sensitive user information.
 
 **Evidence**  
 
@@ -256,14 +261,14 @@ The app stores sensitive information such as usernames and passwords in the `myS
 Using ADB, the app's shared preferences file `mySharedPreferences.xml` was accessed, which stores encrypted usernames and passwords.  
 ![alt text](img/adb-sharedpref-crypto.png)
 - Decryption Process  
-Upon inspecting the app's source code using Jadx, the CryptoClass.java file was identified, revealing the hardcoded cryptographic key used for encryption:  
+Upon inspecting the app's source code using Jadx, the `CryptoClass.java` file was identified, revealing the hardcoded cryptographic key used for encryption:  
 ![alt text](img/jadx-cryptoclass.png)
 
-This key, along with a static Initialization Vector (IV), was used in AES/CBC mode to encrypt the stored data. Using these values, the data was easily decrypted using CyberChef.   
+- This key, along with a static `Initialization Vector (IV)`, was used in `AES/CBC` mode to encrypt the stored data. Using these values, the data was easily decrypted using CyberChef.   
  
-![alt text](img/cybefchef-user.png)  
-   
-![alt text](img/cyberchef-pass.png)  
+  ![alt text](img/cybefchef-user.png)  
+    
+  ![alt text](img/cyberchef-pass.png)  
 
 
 **OWASP Mobile Top 10 Reference**  
@@ -284,17 +289,13 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N
 
 **Mitigation**  
 
-- Use Strong Cryptography  
-Replace the hardcoded cryptographic key with dynamically generated keys stored securely using the Android Keystore system.  
+- Use Strong Cryptography: Replace the hardcoded cryptographic key with dynamically generated keys stored securely using the Android Keystore system.  
 
-- Secure Initialization Vectors (IV)  
-Generate a random IV for each encryption operation instead of using a static IV to ensure the ciphertext is unique for each encrypted data item.  
+- Secure Initialization Vectors (IV): Generate a random IV for each encryption operation instead of using a static IV to ensure the ciphertext is unique for each encrypted data item.  
 
-- Use EncryptedSharedPreferences  
-Utilize Android's EncryptedSharedPreferences for securely storing sensitive information like usernames and passwords, which handles encryption properly and securely.   
+- Use EncryptedSharedPreferences: Utilize Android's EncryptedSharedPreferences for securely storing sensitive information like usernames and passwords, which handles encryption properly and securely.   
 
-- Remove Hardcoded Credentials:  
-Eliminate hardcoded keys from the codebase to prevent easy decryption and exposure of sensitive data by attackers.
+- Remove Hardcoded Credentials: Eliminate hardcoded keys from the codebase to prevent easy decryption and exposure of sensitive data by attackers.
 
 
 ### 8.5 Bypass of Root Detection
@@ -311,7 +312,7 @@ Before the bypass, the application detects that the device is rooted and display
 
   ![alt text](img/app-rooted.png)
 - Root Detection Code in Jadx  
-The root detection logic is implemented in the PostLogin activity and is based on checking the existence of the su binary and Superuser.apk file.  
+The root detection logic is implemented in the `PostLogin` activity and is based on checking the existence of the `su` binary and `Superuser.apk` file.  
   ![alt text](img/jadx-postlogin-root.png)  
 
 - Frida Server Running  
@@ -319,7 +320,7 @@ The Frida server is successfully running on the device, allowing runtime hooking
   ![alt text](img/frida-server-running.png)
 
 - Objection Command for Root Detection Bypass  
-Using Objection, the root detection checks were bypassed by setting the return values of the doesSUexist() and doesSuperuserApkExist() methods to false.
+Using Objection, the root detection checks were bypassed by setting the return values of the `doesSUexist()` and `doesSuperuserApkExist()` methods to false.
 
   ```bash
   objection -g com.android.insecurebankv2 explore
@@ -331,7 +332,7 @@ Using Objection, the root detection checks were bypassed by setting the return v
   android hooking set return_value com.android.insecurebankv2.PostLogin.doesSuperuserApkExist false
   ```  
   ![alt text](img/objection-unroot.png)
-S
+
 - Application Displays Not Rooted Status
 After bypassing the root detection, the application now displays the message `Device not Rooted!!`, indicating that the root detection has been successfully disabled.  
 
@@ -346,12 +347,7 @@ After bypassing the root detection, the application now displays the message `De
 
 
 **Impact**  
-By bypassing root detection, attackers gain full access to the application’s features on a rooted device, leading to increased risks of data exposure, tampering, and reverse engineering. Rooted devices provide deep access to the system and app data, which would normally be protected. When root detection is bypassed, attackers can:
-
-- Extract sensitive data
-- Modify the app or alter its behavior
-- Circumvent security measures that protect the app in non-rooted environments
-- Exploit other vulnerabilities more easily due to elevated privileges
+By bypassing root detection, attackers gain full access to the application’s features on a rooted device, leading to increased risks of data exposure, tampering, and reverse engineering. Rooted devices provide deep access to the system and app data, which would normally be protected. When root detection is bypassed, attackers can: extract sensitive data, modify the app or alter its behavior, circumvent security measures that protect the app in non-rooted environments and exploit other vulnerabilities more easily due to elevated privileges
   
 The primary concern is that bypassing root detection allows attackers to operate with the privileges of a rooted device, while the application remains unaware and continues to function as though it were in a secure, non-rooted environment.
 
@@ -362,7 +358,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
-- Stronger Root Detection: Use advanced root detection techniques like or approaches that check system integrity, detect root management tools, and look for tampering with system files.
+- Stronger Root Detection: Use advanced root detection techniques or approaches that check system integrity, detect root management tools, and look for tampering with system files.
 - Server-Side Enforcement: Implement server-side validation to enforce security measures and monitor for tampering or bypass attempts, ensuring security remains intact even if client-side detection is bypassed.
 - Tamper Detection: Add tamper-detection mechanisms to detect runtime manipulation or debugging, preventing tools from altering app behavior.
 - Monitor and Respond: Monitor app behavior for anomalies. Upon detecting tampering, trigger a response like logging the user out or disabling functionality.
@@ -370,13 +366,13 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ### 8.6  Insecure HTTP Connections
 
 **Description**  
-The application communicates with the server using the insecure HTTP protocol instead of HTTPS. This lack of encryption leaves all data transmitted between the client and the server vulnerable to interception by attackers via man-in-the-middle (MITM) attacks. Using HTTP without encryption compromises the confidentiality and integrity of the data, including non-sensitive information, increasing the overall security risk of the application.
+The application communicates with the server using the insecure `HTTP` protocol instead of `HTTPS`. This lack of encryption leaves all data transmitted between the client and the server vulnerable to interception by attackers via man-in-the-middle (MITM) attacks. Using HTTP without encryption compromises the confidentiality and integrity of the data, including non-sensitive information, increasing the overall security risk of the application.
 
 
 **Evidence**  
 Using Burp Suite, the HTTP traffic between the application and the server was intercepted. The traffic was transmitted without any encryption, allowing it to be easily captured and analyzed.
 
-- Setup: A manual proxy was configured in the emulator’s WiFi settings, directing traffic through Burp Suite. The Burp Suite CA certificate was installed on the device to allow interception of HTTPS traffic. HTTP traffic was intercepted and analyzed, revealing the unencrypted transmission of sensitive data.
+- Setup: A manual proxy was configured in the emulator’s WiFi settings, directing traffic through Burp Suite. The Burp Suite CA certificate was also installed later on the device to allow interception of the absent HTTPS traffic. HTTP traffic was intercepted and analyzed, revealing the unencrypted transmission of sensitive data.
 
   ![alt text](img/burp-setup-proxy.png)
 
@@ -451,16 +447,16 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 The application allows users to change another user's password by simply knowing their username. This vulnerability arises due to the lack of proper access control in the `/changepassword` endpoint. The application does not verify the identity of the user initiating the password change request, allowing any authenticated user to change the password of another user by sending a specially crafted request with the target's username.
 
 **Evidence**  
-By using Burp Suite, the password change request was intercepted and modified. The username of another user (jack) was entered along with a new password (senha). The application accepted the request and changed the password of jack without any further validation. The request and response are shown below:
+By using Burp Suite, the password change request was intercepted and modified. The username of another user was entered along with a new password. The application accepted the request and changed the password of jack without any further validation. The request and response are shown below:
 
 - Password Change Request/Response  
 
-![alt text](img/burp-changepassword.png)
+  ![alt text](img/burp-changepassword.png)
 
 - Login with New Password  
-After changing the password, an attempt was made to log in as `jack` with the new password (`senha`). The login was successful, confirming that the password change was executed.  
+After changing the password, an attempt was made to log in with the new password. The login was successful, confirming that the password change was executed.  
 
-![alt text](img/burp-login-test.png)
+  ![alt text](img/burp-login-test.png)
 
 **OWASP Mobile Top 10 Reference**  
 [M3: Insecure Authentication/Authorization](https://owasp.org/www-project-mobile-top-10/2023-risks/m3-insecure-authentication-authorization.html)
@@ -490,7 +486,7 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ### 8.9 Enumeration of Usernames via Endpoints
 
 **Description**  
-The application is vulnerable to username enumeration through `/login` and other endpoints. An attacker can determine whether a username is valid by observing the server's responses to login attempts and password change requests. This issue becomes critical when combined with the password change vulnerability, allowing an attacker to identify valid usernames and then reset their passwords without the need for further credentials.
+The application is vulnerable to username enumeration through `/login` and other endpoints. An attacker can determine whether a username is valid by observing the server's responses to login attempts and password change requests. This issue becomes critical when combined with the [password change vulnerability](#88-improper-access-control-on-password-change), allowing an attacker to identify valid usernames and then reset their passwords without the need for further credentials.
 
 **Evidence**  
 - Using Burp Suite’s Intruder tool, different usernames were tested against the `/login` endpoint. The application returned distinct responses for valid and invalid usernames:
@@ -537,11 +533,11 @@ An attacker can exploit this issue by launching these activities directly, bypas
 
 
 **Evidence**  
-The following ADB command was executed to directly launch the PostLogin activity without authentication:  
+- The following ADB command was executed to directly launch the PostLogin activity without authentication:  
 
-```bash
-adb shell am start -n com.android.insecurebankv2/com.android.insecurebankv2.PostLogin
-```
+  ```bash
+  adb shell am start -n com.android.insecurebankv2/com.android.insecurebankv2.PostLogin
+  ```
 
 - Command Execution:  
   
@@ -608,18 +604,18 @@ The application was modified through binary patching, where the APK was decompil
 - The APK was successfully reinstalled on the emulator, demonstrating the feasibility of this attack.
 
 **OWASP Mobile Top 10 Reference**  
-[M7: Insufficient Binary Protection]()
+[M7: Insufficient Binary Protection](https://owasp.org/www-project-mobile-top-10/2023-risks/m7-insufficient-binary-protection.html)
 
 **CWE Reference**  
-[CWE-494: Download of Code Without Integrity Check]()
+[CWE-494: Download of Code Without Integrity Check](https://cwe.mitre.org/data/definitions/494.html)
 
 **Impact**  
 An attacker with access to the APK file can modify its functionality and repackage it, potentially introducing malicious code or enabling hidden features. This compromises the integrity of the application and poses significant security risks, including data theft, unauthorized access, or the propagation of malware.
 
 **CVSS v4.0 Score**  
-8.6 / High
+8.5 / High
 ```
-CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
@@ -632,11 +628,11 @@ CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 
 **Description**  
 
-The application contains a hidden "Create User" feature that is not intended to be accessible by users. However, through manipulation of a hidden value in the APK code, this feature can be activated. Although the feature does not successfully allow the creation of a new user, its presence and potential activation illustrate a significant security vulnerability that could lead to unintended access to application features or expose sensitive operations.
+The application contains a hidden `Create User` feature that is not intended to be accessible by users. However, through manipulation of a hidden value in the APK code, this feature can be activated. Although the feature does not successfully allow the creation of a new user, its presence and potential activation illustrate a significant security vulnerability that could lead to unintended access to application features or expose sensitive operations.
 
 **Evidence**  
 
-- The hidden value controlling the visibility of the "Create User" button was identified and altered in the decompiled APK code, refer to [8.11 Binary Patching](#811-binary-patching), after recompiling and reinstalling the APK, the "Create User" button was made visible in the application:  
+- The hidden value controlling the visibility of the `Create User` button was identified and altered in the decompiled APK code, refer to [8.11 Binary Patching](#811-binary-patching), after recompiling and reinstalling the APK, the button was made visible in the application:  
 
   ![alt text](img/app-create-user.png)  
 
@@ -647,18 +643,18 @@ The application contains a hidden "Create User" feature that is not intended to 
   ![alt text](img/jadx-createusermsg.png)
 
 **OWASP Mobile Top 10 Reference**  
-[M1: Improper Platform Usage]()
+[M7: Insufficient Binary Protection](https://owasp.org/www-project-mobile-top-10/2023-risks/m7-insufficient-binary-protection.html)
 
 **CWE Reference**  
-[CWE-285: Improper Authorization]()
+[CWE-912: Hidden Functionality](https://cwe.mitre.org/data/definitions/912.html)
 
 **Impact**  
 The ability to activate hidden features through code manipulation poses a security risk by exposing parts of the application that were not intended for user interaction. This can lead to unintended access to sensitive functions, compromising the security of the application and potentially enabling further exploitation.
 
 **CVSS v4.0 Score**  
-6.5 / Medium
+5.1 / Medium
 ```
-CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:R/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N
 ```
 
 **Mitigation**  
@@ -667,13 +663,17 @@ CVSS:4.0/AV:N/AC:H/AT:N/PR:L/UI:R/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N
 - Regularly audit the application for the presence of unintended features or code paths that should not be accessible in production environments.
 
 
-
+### ADB LOGCAT
 
 ### CERTIFICATE PINNING
 
 ### EMULATOR DETECTION
 
-### JAVASCRIPT CODE IN external storage for VIEW STATEMENT
+### XSS - JAVASCRIPT CODE IN external storage for VIEW STATEMENT sdcard
+
+
+
+
 
 https://github.com/micro-joan/BlackStone
 
