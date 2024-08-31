@@ -15,17 +15,19 @@
     - [8.3 Allow Backup Enabled](#83-allow-backup-enabled)
     - [8.4 Weak Cryptography in User Data Storage](#84-weak-cryptography-in-user-data-storage)
     - [8.5 Bypass of Root Detection](#85-bypass-of-root-detection)
-    - [8.6  Insecure HTTP Connections](#86--insecure-http-connections)
-    - [8.7  Plaintext Transmission of Sensitive Information](#87--plaintext-transmission-of-sensitive-information)
+    - [8.6 Insecure HTTP Connections](#86-insecure-http-connections)
+    - [8.7 Plaintext Transmission of Sensitive Information](#87-plaintext-transmission-of-sensitive-information)
     - [8.8 Improper Access Control on Password Change](#88-improper-access-control-on-password-change)
     - [8.9 Enumeration of Usernames via Endpoints](#89-enumeration-of-usernames-via-endpoints)
     - [8.10 Bypassing Login to Access PostLogin Activity Directly](#810-bypassing-login-to-access-postlogin-activity-directly)
     - [8.11 Binary Patching](#811-binary-patching)
     - [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation)
-    - [ADB LOGCAT](#adb-logcat)
-    - [CERTIFICATE PINNING](#certificate-pinning)
-    - [EMULATOR DETECTION](#emulator-detection)
-    - [XSS - JAVASCRIPT CODE IN external storage for VIEW STATEMENT sdcard](#xss---javascript-code-in-external-storage-for-view-statement-sdcard)
+    - [8.13 Sensitive Information Exposure in Logs](#813-sensitive-information-exposure-in-logs)
+    - [8.14 Insecure Content Provider](#814-insecure-content-provider)
+    - [8.15 Insecure Broadcast](#815-insecure-broadcast)
+    - [8.16 Cross-Site Scripting (XSS) in ViewStatement](#816-cross-site-scripting-xss-in-viewstatement)
+    - [8.17](#817)
+    - [8.18](#818)
 
 ## 1. Introduction
 
@@ -363,7 +365,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 - Tamper Detection: Add tamper-detection mechanisms to detect runtime manipulation or debugging, preventing tools from altering app behavior.
 - Monitor and Respond: Monitor app behavior for anomalies. Upon detecting tampering, trigger a response like logging the user out or disabling functionality.
 
-### 8.6  Insecure HTTP Connections
+### 8.6 Insecure HTTP Connections
 
 **Description**  
 The application communicates with the server using the insecure `HTTP` protocol instead of `HTTPS`. This lack of encryption leaves all data transmitted between the client and the server vulnerable to interception by attackers via man-in-the-middle (MITM) attacks. Using HTTP without encryption compromises the confidentiality and integrity of the data, including non-sensitive information, increasing the overall security risk of the application.
@@ -397,7 +399,7 @@ An attacker intercepting this traffic can gain access to users' credentials, lea
 9.3 / Critical
 
 ```
-CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 ```
 
 **Mitigation**  
@@ -405,7 +407,7 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 - Regularly Monitor and Enforce Security Standards: Continuously monitor network communications for compliance with security protocols.
 
 
-### 8.7  Plaintext Transmission of Sensitive Information
+### 8.7 Plaintext Transmission of Sensitive Information
 
 **Description**  
 The application transmits sensitive information, such as usernames and passwords, over the network in plaintext. This vulnerability allows attackers to intercept these credentials easily if they gain access to the network, especially in scenarios where the network is unsecured, such as public Wi-Fi. Even if HTTPS is not implemented, the transmission of sensitive information in plaintext exacerbates the risk.
@@ -433,7 +435,7 @@ An attacker intercepting this traffic can gain access to users' credentials, lea
 9.3 / Critical
 
 ```
-CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 ```
 
 **Mitigation**  
@@ -527,13 +529,13 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 ### 8.10 Bypassing Login to Access PostLogin Activity Directly
 
 **Description**  
-The application allows an attacker to bypass authentication and directly access sensitive activities, such as `PostLogin`, by using simple ADB commands. This vulnerability arises because the app does not enforce proper access control on activities, leaving them accessible even without proper authentication. Using static analysis with Jadx, it was observed that other activities, such as `LoginActivity` `DoTransfer`, `ViewStatement`, and `ChangePassword`, also lack proper access restrictions.
+The application allows an attacker to bypass authentication and directly access sensitive activities, such as `PostLogin`, by using simple ADB commands. This vulnerability arises because the app does not enforce proper access control on activities, leaving them accessible even without proper authentication.
 
 An attacker can exploit this issue by launching these activities directly, bypassing the login mechanism and accessing sensitive functionalities.
 
 
 **Evidence**  
-- The following ADB command was executed to directly launch the PostLogin activity without authentication:  
+- The following ADB command was executed to directly launch the `PostLogin` activity without authentication:  
 
   ```bash
   adb shell am start -n com.android.insecurebankv2/com.android.insecurebankv2.PostLogin
@@ -663,19 +665,243 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N
 - Regularly audit the application for the presence of unintended features or code paths that should not be accessible in production environments.
 
 
-### ADB LOGCAT
+### 8.13 Sensitive Information Exposure in Logs
 
-### CERTIFICATE PINNING
-
-### EMULATOR DETECTION
-
-### XSS - JAVASCRIPT CODE IN external storage for VIEW STATEMENT sdcard
+**Description**  
+The application logs sensitive information, including the username and password, in plain text during the login process. This occurs in the `DoLogin` activity, where user credentials are captured and written to the log for debugging purposes. Logging sensitive information poses a significant security risk, as it can be easily accessed by anyone with access to the device's log files, including malicious apps or users with physical access.
 
 
+**Evidence**  
+- The `DoLogin` activity logs the username and password during the login process. The following code snippet from the decompiled APK using Jadx shows the logging of sensitive information.  
+  
+  ![alt text](img/jadx-dologin-log.png)  
+
+- Using `adb logcat`, the sensitive information was retrieved from the logs as follows:  
+  
+  ![alt text](img/adb-logcat-login.png)
+
+**OWASP Mobile Top 10 Reference**  
+[M9: Insecure Data Storage](https://owasp.org/www-project-mobile-top-10/2023-risks/m9-insecure-data-storage.html)
+
+**CWE Reference**  
+[CWE-532: Insertion of Sensitive Information into Log File](https://cwe.mitre.org/data/definitions/532.html)
+
+**Impact**  
+Logging sensitive information such as usernames and passwords exposes users to significant risks, including account compromise and identity theft. If an attacker gains access to the logs, they can easily extract these credentials and use them to gain unauthorized access to the application or other services where the user might have reused the same credentials.
+
+**CVSS v4.0 Score**  
+8.5 / High
+```
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+```
+
+**Mitigation**  
+
+- Remove Sensitive Data from Logs: Ensure that sensitive information, such as usernames, passwords, and tokens, is never logged. Replace any existing logging of such data with generic information or remove the logging statements altogether.
+
+- Secure Logging Practices: Implement secure logging practices that filter or mask sensitive information before it is written to the logs.
+
+- Use Secure Storage for Debug Information: If sensitive information must be logged for debugging purposes during development, ensure that it is stored securely and removed before the application is released to production.
 
 
 
-https://github.com/micro-joan/BlackStone
+### 8.14 Insecure Content Provider
+
+**Description**  
+The `TrackUserContentProvider` in the InsecureBankV2 application is improperly secured, allowing unauthorized access to sensitive user data. Content Providers in Android are components that manage access to a structured set of data. However, when not secured properly, they can expose this data to other apps or malicious actors. In this case, the `TrackUserContentProvider` allows access to sensitive information such as user names, IDs, and potentially other user-related data without requiring proper authentication or authorization.
+
+**Evidence**  
+
+- Content Provider Class `TrackUserContentProvider`
+The decompiled source code reveals that the content provider lacks any security checks, making it vulnerable to unauthorized access.  
+
+  ![alt text](img/jadx-trackuser.png)
+- ADB Content Queries
+Using ADB commands, it was possible to retrieve user information stored in the content provider. The following query demonstrates how an attacker can extract and modify data without any authentication:
+![alt text](img/adb-content-queries.png)
+
+**OWASP Mobile Top 10 Reference**  
+[M9: Insecure Data Storage](https://owasp.org/www-project-mobile-top-10/2023-risks/m9-insecure-data-storage.html)
+
+**CWE Reference**  
+
+[CWE-200: Exposure of Sensitive Information to an Unauthorized Actor:](https://cwe.mitre.org/data/definitions/200.html)  
+
+[CWE-276: Incorrect Default Permissions](https://cwe.mitre.org/data/definitions/276.html)
+
+**Impact**  
+The exposure of the `TrackUserContentProvider` to unauthorized access can lead to severe privacy violations and potential data breaches. Attackers can query sensitive user data, modify it, or even delete it, leading to loss of data integrity and privacy. In a banking application, this could result in identity theft, unauthorized transactions, and other malicious activities.
+
+**CVSS v4.0 Score**  
+8.5 / High
+```
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
+```
+
+**Mitigation**  
+- Implement Proper Authentication and Authorization: Ensure that the T`rackUserContentProvider` requires proper authentication and authorization before allowing any access to its data. This can be achieved by implementing permission checks and restricting access to only trusted applications.
+
+- Encrypt Sensitive Data: Encrypt any sensitive data stored within the content provider to add an additional layer of security, ensuring that even if access is obtained, the data remains secure.
+
+- Use Secure Content Providers: Consider using the ContentProvider class's built-in mechanisms for securing data access, such as implementing the `getReadPermission()` and `getWritePermission()` methods to enforce access control.
+
+
+### 8.15 Insecure Broadcast
+
+**Description**  
+The application contains a broadcast receiver `MyBroadCastReceiver` that processes sensitive information, including usernames and passwords. This broadcast is triggered when a password change attempt is made, capturing the new password and sending an SMS message with the old and new passwords included. However, the actual password change is not performed on the server-side. Since this broadcast can be triggered by any app or entity with knowledge of the broadcast action, it poses a significant security risk by revealing the password of the currently logged-in user. The sensitive data is logged in the device logs and can be intercepted by malicious actors.
+
+**Evidence**  
+- The broadcast receiver decrypts and retrieves the current user's password from the shared preferences, then sends it via SMS along with the new password provided in the broadcast.  
+  
+  ![alt text](img/jadx-broadcastsms-changepass.png)
+
+  ![alt text](img/jadx-broadcastsms-class.png)
+
+- When the broadcast is triggered, the current user's password is revealed in the SMS message and the logcat output, making it accessible to anyone with access to the device logs.  
+  
+  ![alt text](img/adb-broadcast.png)
+
+  ![alt text](img/adb-logcat-broadcast.png)
+
+**OWASP Mobile Top 10 Reference**  
+[M5: Insecure Communication](https://owasp.org/www-project-mobile-top-10/2023-risks/m5-insecure-communication.html)
+
+**CWE Reference**  
+[CWE-925: Improper Verification of Intent by Broadcast Receiver](https://cwe.mitre.org/data/definitions/925.html)  
+[CWE-200: Exposure of Sensitive Information to an Unauthorized Actor](https://cwe.mitre.org/data/definitions/200.html)
+
+**Impact**  
+This vulnerability allows attackers to intercept sensitive user information, such as passwords, simply by triggering the broadcast receiver. This can lead to account compromise, unauthorized access, and potential identity theft. The exposure of this data in logs further exacerbates the risk, as it could be accessed by malicious applications or users with physical access to the device.
+
+**CVSS v4.0 Score**  
+8.5 / High
+```
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+```
+
+**Mitigation**  
+- Secure Broadcasts: Ensure that sensitive broadcasts are protected by enforcing proper permissions or utilizing secure messaging channels that prevent unauthorized apps from accessing or triggering them.
+  
+- Encrypt Sensitive Data: Avoid sending sensitive information like passwords in plain text via SMS. Instead, use secure, encrypted channels to transmit sensitive data.
+  
+- Log Management: Ensure that sensitive information is not logged, and review all log statements to remove or obscure any sensitive data before deploying the application.
+  
+- Server-Side Validation: Implement server-side validation for all password changes to ensure that password modifications are legitimate and that sensitive data is not unnecessarily exposed.
+
+
+
+
+### 8.16 Cross-Site Scripting (XSS) in ViewStatement
+
+**Description**  
+The ViewStatemen feature in the application is vulnerable to Cross-Site Scripting (XSS) due to improper handling of user-generated content within the `WebView`. The application loads HTML files named `Statements_{username}.html` from external storage and renders them in a WebView with JavaScript enabled. Since these HTML files are stored in external storage, they can be modified by other applications or users with access to the file system. An attacker could inject malicious JavaScript code into these files, which would then be executed when the victim views their statement within the app.
+
+**Evidence**  
+- Code Analysis: The ViewStatement activity loads HTML files from external storage and renders them in a `WebView` with JavaScript enabled.  
+  
+  ![alt text](img/jadx-statement-xss.png)    
+
+- Using `adb logcat`, the HTML file path and content were confirmed.
+
+  ![alt text](img/adb-logcat-statement.png)
+
+- XSS Proof of Concept: By injecting the following script into the HTML file, the attack was successfully executed when the user viewed the statement  
+
+  ```
+  <script>alert("XSS")</script>
+  ```
+  
+  ![alt text](img/adb-statement-xss.png)  
+
+  ![alt text](img/app-xss.png)
+
+
+- Another example of redirection via JavaScript:  
+  
+  ```
+  <script>
+      window.location.href = "https://google.com/";
+  </script>
+  ```
+  ![alt text](img/app-xss-redirection.png)
+
+**OWASP Mobile Top 10 Reference**  
+[M5: Insecure Communication](https://owasp.org/www-project-mobile-top-10/2023-risks/m5-insecure-communication.html)
+
+**CWE Reference**  
+[CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)
+
+**Impact**  
+The impact of this vulnerability is significant, as it allows attackers to execute arbitrary JavaScript within the context of the application's WebView. This can lead to:
+
+- Session Hijacking: The attacker could steal session cookies or tokens, allowing them to impersonate the victim.
+- Data Theft: Sensitive information, such as user credentials, could be extracted and sent to a remote server.
+- Phishing Attacks: The attacker could redirect the user to a malicious site that mimics the legitimate application to steal further credentials.
+- Device Exploitation: If the WebView has elevated privileges, the attacker could perform more extensive attacks on the device.
+
+
+**CVSS v4.0 Score**  
+8.3 / High
+```
+CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:A/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
+```
+
+**Mitigation**  
+- Disable JavaScript: If JavaScript is not necessary for the functionality, disable it in the WebView using `mWebView.getSettings().setJavaScriptEnabled(false);`.
+- Sanitize Input: Ensure that any content loaded into the WebView is sanitized to remove or escape any potential JavaScript code before rendering.
+- Use Internal Storage: Avoid storing sensitive files like statements in external storage, where they can be modified by other applications. Instead, store them in a secure internal storage location.
+- Content Security Policy (CSP): Implement a Content Security Policy to restrict the sources from which JavaScript can be loaded and executed within the WebView.
+- Review WebView Configuration: Audit and configure WebView settings to minimize exposure, such as disabling form autofill and restricting access to potentially dangerous APIs.
+
+
+### 8.17
+
+
+**Description**  
+
+
+**Evidence**  
+
+**OWASP Mobile Top 10 Reference**  
+[]()
+
+**CWE Reference**  
+[]()
+
+**Impact**  
+
+
+**CVSS v4.0 Score**  
+
+
+**Mitigation**  
+
+
+
+### 8.18 
+
+
+**Description**  
+
+
+**Evidence**  
+
+**OWASP Mobile Top 10 Reference**  
+[]()
+
+**CWE Reference**  
+[]()
+
+**Impact**  
+
+
+**CVSS v4.0 Score**  
+
+
+**Mitigation**  
+
+
 
 
 ---
