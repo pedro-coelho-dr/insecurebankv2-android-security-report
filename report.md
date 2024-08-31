@@ -100,7 +100,7 @@ The APK file was analyzed on VirusTotal, where 12 out of 68 security vendors fla
 VirusTotal also provided a comprehensive view of the APK's reputation, certificate attributes, and contacted domains/IPs, which contributed to assessing the app's overall risk.
 
 
-[Reference Link](https://www.virustotal.com/gui/file/b18af2a0e44d7634bbcdf93664d9c78a2695e050393fcfbb5e8b91f902d194a4)
+- [VirusTotal Reference Link](https://www.virustotal.com/gui/file/b18af2a0e44d7634bbcdf93664d9c78a2695e050393fcfbb5e8b91f902d194a4)
 
 
 **MobSF Analysis**
@@ -129,7 +129,7 @@ The MobSF static analysis identified critical security risks within the Insecure
   - **Exported Components**: `PostLogin, DoTransfer, ViewStatement, TrackUserContentProvider` Several critical components are exported, making them accessible to other apps on the device, potentially exposing the app to unauthorized access and security risks.
   - **StrandHogg 2.0 Vulnerability**: `PostLogin, DoTransfer, ViewStatement, ChangePassword` Multiple activities  are vulnerable to task hijacking attacks.
 
-  [Full MobSF Report](pdf/insecurebankv2.pdf)
+- [Full MobSF Report](pdf/insecurebankv2.pdf)
   
 **Jadx Analysis**
 
@@ -324,7 +324,7 @@ CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 ### 8.4 Enumeration of Usernames via Endpoints
 
 **Description**  
-The application is vulnerable to username enumeration through `/login` and other endpoints. An attacker can determine whether a username is valid by observing the server's responses to login attempts and password change requests. This issue becomes critical when combined with the [password change vulnerability](#88-improper-access-control-on-password-change), allowing an attacker to identify valid usernames and then reset their passwords without the need for further credentials.
+The application is vulnerable to username enumeration through `/login` and other endpoints. An attacker can determine whether a username is valid by observing the server's responses to login attempts and password change requests. This issue becomes critical when combined with the [password change vulnerability](#85-improper-access-control-on-password-change), allowing an attacker to identify valid usernames and then reset their passwords without the need for further credentials.
 
 **Evidence**  
 - Using Burp Suite’s Intruder tool, different usernames were tested against the `/login` endpoint. The application returned distinct responses for valid and invalid usernames:
@@ -423,7 +423,7 @@ The application was modified through binary patching, where the APK was decompil
   
   ![alt text](img/jadx-hiddenbutton.png)
 
-- The value on the LoginActivity.smali, setVisibility was set to 0x0, making the "Create User" button visible in the application, refer to [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation):
+- The value on the LoginActivity.smali, setVisibility was set to 0x0, making the "Create User" button visible in the application, refer to [Create User Button Activation through Hidden Value Manipulation](#816-create-user-button-activation-through-hidden-value-manipulation):
 
   ![alt text](img/apktool-code.png)
 
@@ -521,7 +521,7 @@ Using ADB commands, it was possible to retrieve user information stored in the c
 
 **CWE Reference**  
 
-[CWE-200: Exposure of Sensitive Information to an Unauthorized Actor:](https://cwe.mitre.org/data/definitions/200.html)  
+[CWE-200: Exposure of Sensitive Information to an Unauthorized Actor](https://cwe.mitre.org/data/definitions/200.html)  
 
 [CWE-276: Incorrect Default Permissions](https://cwe.mitre.org/data/definitions/276.html)
 
@@ -716,7 +716,7 @@ The ViewStatemen feature in the application is vulnerable to Cross-Site Scriptin
 
 - XSS Proof of Concept: By injecting the following script into the HTML file, the attack was successfully executed when the user viewed the statement  
 
-  ```
+  ```javascript
   <script>alert("XSS")</script>
   ```
   
@@ -727,7 +727,7 @@ The ViewStatemen feature in the application is vulnerable to Cross-Site Scriptin
 
 - Another example of redirection via JavaScript:  
   
-  ```
+  ```javascript
   <script>
       window.location.href = "https://google.com/";
   </script>
@@ -798,7 +798,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N
 **Mitigation**  
 To mitigate this risk, set `android:allowBackup="false"` in the `AndroidManifest.xml` file:
 
-```
+```java
 <application
     android:allowBackup="false">
 </application>
@@ -881,7 +881,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N
 **Mitigation**  
  Ensure that the `android:debuggable` flag is set to `false` for production releases. The following line should be added or modified in the `AndroidManifest.xml`:
 
-```
+```java
 <application
     android:debuggable="false">
 </application>
@@ -898,7 +898,7 @@ The application contains a hidden `Create User` feature that is not intended to 
 
 **Evidence**  
 
-- The hidden value controlling the visibility of the `Create User` button was identified and altered in the decompiled APK code, refer to [8.11 Binary Patching](#811-binary-patching), after recompiling and reinstalling the APK, the button was made visible in the application:  
+- The hidden value controlling the visibility of the `Create User` button was identified and altered in the decompiled APK code, refer to [Binary Patching](#86-binary-patching), after recompiling and reinstalling the APK, the button was made visible in the application:  
 
   ![alt text](img/app-create-user.png)  
 
