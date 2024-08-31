@@ -39,11 +39,12 @@ adb install InsecureBankv2.apk
 
 Download and install [Genymotion Desktop](https://www.genymotion.com/)
 
-Configure an Android 10.0 device, such as:
+Configure an Android device, this project uses the following environment:
  
-- Host Machine: *Windows 11, Intel i7, 32GB RAM.*  
+**Environment**  
+- Host Machine: *Windows 11, Intel i7, 32GB RAM, with the latest security updates applied.*  
 - Emulator: *Genymotion Desktop Version 3.7.1*, configured to emulate a *Samsung Galaxy S8* with *Android 10.0.*  
-- Network Environment: The Genymotion emulator connects to the internet via the host machine. The InsecureBankV2 app is configured to communicate with an external server using IP and port provided by the instructor. 
+- Network Environment: The Genymotion emulator is connected to the internet via the host machine. A manual proxy is configured to route traffic through security testing tools. The InsecureBankV2 app communicates with an external server using the IP and port provided by the instructor.
 
 
 ### MobSF
@@ -132,7 +133,7 @@ unxz frida-server-16.4.8-android-x86.xz
 ```bash
 adb push frida-server-16.4.8-android-x86 /data/local/tmp/
 ```
-Connect to the ADH shell, navigate to the directory, change permissions, and run the server:
+Connect to the ADB shell, navigate to the directory, change permissions, and run the server:
 ```bash
 cd /data/local/tmp/
 ```
@@ -173,11 +174,12 @@ objection -g com.android.insecurebankv2 explore
 - **[VirusTotal](https://www.virustotal.com/)**
 - **[Genymotion Desktop](https://docs.genymotion.com/desktop/)**
 - **[Jadx](https://github.com/skylot/jadx)**
+- **[Burp Suite](https://portswigger.net/burp)**
 - **[ADB (Android Debug Bridge)](https://developer.android.com/studio/command-line/adb)**
 - **[Frida](https://frida.re/)**
 - **[Objection](https://github.com/sensepost/objection)**
+- **[Apktool](https://apktool.org/)**
 - **[CyberChef](https://gchq.github.io/CyberChef/)**
-- **[Burp Suite](https://portswigger.net/burp)**
 - **[Kali Linux](https://www.kali.org/)**
 - **[Docker](https://www.docker.com/)**
 - **[VSCode](https://code.visualstudio.com/)**

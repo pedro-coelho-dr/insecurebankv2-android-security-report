@@ -9,6 +9,10 @@
   - [5. Scope](#5-scope)
   - [6. Reconnaissance](#6-reconnaissance)
   - [7. Executive Summary](#7-executive-summary)
+    - [7.1 Vulnerable Surface](#71-vulnerable-surface)
+    - [7.2 Revealed Threats](#72-revealed-threats)
+    - [7.4 Table of Vulnerabilities](#74-table-of-vulnerabilities)
+    - [7.5 Recommendations](#75-recommendations)
   - [8. Vulnerabilities](#8-vulnerabilities)
     - [8.1 Hardcoded Backdoor Account](#81-hardcoded-backdoor-account)
     - [8.2 Debugging Enabled](#82-debugging-enabled)
@@ -26,16 +30,14 @@
     - [8.14 Insecure Content Provider](#814-insecure-content-provider)
     - [8.15 Insecure Broadcast](#815-insecure-broadcast)
     - [8.16 Cross-Site Scripting (XSS) in ViewStatement](#816-cross-site-scripting-xss-in-viewstatement)
-    - [8.17](#817)
-    - [8.18](#818)
 
 ## 1. Introduction
 
-This report details the results of a penetration test conducted by **Pedro Coelho** on the **[InsecureBankV2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 to 31 of August, 2024. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
+This report details the results of a penetration test conducted by **Pedro Coelho** on the **[InsecureBankv2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 to 31 of August, 2024. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
 
 ## 2. Methodology
 
-This methodology is crafted with a focus on the specific needs of the InsecureBankv2 penetration test, drawing upon insights from the [OWASP Mobile Security Testing Guide (MASTG)](https://mas.owasp.org/MASTG/).  By integrating established best practices with custom-tailored techniques, the approach ensures a thorough and effective assessment of the application’s security posture.
+This methodology is crafted with a focus on the specific needs of the InsecureBankv2 penetration test, drawing upon insights from the [OWASP Mobile Security Testing Guide (MASTG)](https://mas.owasp.org/MASTG/). By integrating established best practices with custom-tailored techniques, the approach ensures a comprehensive and effective assessment of the application’s security posture.
 
 **1. Preparation**  
 The scope and objectives for the pentest are defined. The testing environment is configured with the necessary settings to support comprehensive analysis.
@@ -74,16 +76,16 @@ The vulnerabilities are presented with the following structure: *Title, Descript
 
 ## 4. Objective
 
-The objective of this penetration test is to identify and assess security vulnerabilities within the InsecureBankV2 Android application. The assessment focuses on evaluating the app's security posture through comprehensive static and dynamic analysis, examining network communications, and scrutinizing code for potential vulnerabilities. The primary goal is to provide actionable insights and recommendations that enhance the security of the application, safeguard user data, and ensure compliance with industry security standards.
+The objective of this penetration test is to identify and assess security vulnerabilities within the InsecureBankv2 Android application. The assessment focuses on evaluating the app's security posture through comprehensive static and dynamic analysis, examining network communications, and scrutinizing code for potential vulnerabilities. The primary goal is to provide actionable insights and recommendations that enhance the security of the application, safeguard user data, and ensure compliance with industry security standards.
 
 ## 5. Scope
 
-The scope of this penetration test is strictly confined to the InsecureBankV2 Android application and its direct network communications. The testing encompasses static analysis of the application's code and configuration files, dynamic analysis of its runtime behavior, and thorough examination of network traffic. The assessment deliberately excludes any external systems, third-party integrations, or external APIs associated with the application. This focus ensures a targeted evaluation of the application’s internal security mechanisms and data handling practices.
+The scope of this penetration test is strictly confined to the InsecureBankv2 Android application and its direct network communications. The testing encompasses static analysis of the application's code and configuration files, dynamic analysis of its runtime behavior, and thorough examination of network traffic. The assessment deliberately excludes any external systems, third-party integrations, or external APIs associated with the application. This focus ensures a targeted evaluation of the application’s internal security mechanisms and data handling practices.
 
 **Environment**  
 - Host Machine: *Windows 11, Intel i7, 32GB RAM, with the latest security updates applied.*  
 - Emulator: *Genymotion Desktop Version 3.7.1*, configured to emulate a *Samsung Galaxy S8* with *Android 10.0.*  
-- Network Environment: The Genymotion emulator connected to the internet via the host machine. A manual proxy was configured to route traffic through security testing tools. The InsecureBankV2 app was set up to communicate with an external server using the IP and port provided by the instructor.
+- Network Environment: The Genymotion emulator is connected to the internet via the host machine. A manual proxy is configured to route traffic through security testing tools. The InsecureBankV2 app communicates with an external server using the IP and port provided by the instructor.
 
 For more setup details, refer to [readme](./readme.md).
 
@@ -101,13 +103,11 @@ VirusTotal also provided a comprehensive view of the APK's reputation, certifica
 [Reference Link](https://www.virustotal.com/gui/file/b18af2a0e44d7634bbcdf93664d9c78a2695e050393fcfbb5e8b91f902d194a4)
 
 
-
-
 **MobSF Analysis**
 
 ![alt text](img/mobsf-overview.png)  
 
-The MobSF static analysis identified critical security risks within the InsecureBankV2 Android application, such as the use of weak cryptography, exposed activities vulnerable to task hijacking, and the presence of debugging and backup functionalities that leave the app open to reverse engineering and data leakage. The analysis also revealed improper use of permissions, insecure components, and potential vulnerabilities like the Janus signature vulnerability.
+The MobSF static analysis identified critical security risks within the InsecureBankv2 Android application, such as the use of weak cryptography, exposed activities vulnerable to task hijacking, and the presence of debugging and backup functionalities that leave the app open to reverse engineering and data leakage. The analysis also revealed improper use of permissions, insecure components, and potential vulnerabilities like the Janus signature vulnerability.
 
 
 - Applications Permissions: 
@@ -145,6 +145,72 @@ Burp Suite was employed to intercept network traffic and analyze HTTP requests m
 
 ## 7. Executive Summary
 
+The security assessment conducted on the InsecureBankv2 application aimed to thoroughly explore the vulnerabilities present in the Android application. The methodological approach focused on identifying and exploiting the weaknesses to their fullest extent, ensuring a deep understanding of the actual risks faced by the application. This in-depth approach enabled a comprehensive mapping of the vulnerable surface, an evaluation of the associated risks, and the proposition of mitigation measures for each identified vulnerability.
+
+### 7.1 Vulnerable Surface
+
+The application demonstrated an inadequate security posture, evidenced by the significant number of vulnerabilities discovered during the analysis. Among the flaws identified were critical vulnerabilities that could allow, for example, the interception of sensitive data transmitted without encryption and the exploitation of hardcoded credentials.
+
+The analysis led to the identification of 16 vulnerabilities, classified as follows: 4 critical, 9 high, and 3 medium. 
+
+- **Distribution of vulnerabilities according to the CVSS score severity**  
+  
+![alt text](img/graph-cvss.png)
+
+- **Distribution of vulnerabilities according to the OWASP Mobile Top 10**  
+  
+![alt text](img/graph-owasp.png)
+
+
+### 7.2 Revealed Threats
+The most severe real threat scenarios identified by the analysis include:
+
+- **Interception of Sensitive Data**: Critical vulnerabilities in the transmission of plaintext data could allow attackers to intercept sensitive information, such as login credentials, exposing users to account compromises and identity theft. This risk is exacerbated by the lack of encrypted communication channels (HTTP instead of HTTPS).
+
+- **Unauthorized Access to Critical Features**: Through authentication and authorization flaws, such as the hardcoded backdoor account and improper access control on password change, attackers could directly access post-login activities, modify sensitive information, or even gain full access to user accounts without proper permissions.
+
+- **Arbitrary Code Execution and Data Tampering**: Vulnerabilities related to insufficient binary protection, including bypassing root detection and enabling binary patching, could allow attackers to modify the application, insert malicious code, or access the application's core functionalities, thereby compromising the integrity of the application and the security of user data.
+
+- **Data Leakage and Privacy Violations**: High vulnerabilities such as insecure content providers and the exposure of sensitive information in logs can lead to severe privacy violations and potential data breaches, allowing unauthorized access to user data.
+
+### 7.4 Table of Vulnerabilities
+
+| Vulnerability                                                                                           | Description                                                                | OWASP                                    | CVSS Score | CVSS Rating |
+|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|------------------------------------------|------------|-------------|
+| [8.1 Hardcoded Backdoor Account](#81-hardcoded-backdoor-account)                               | Allows login without a password using a hardcoded account.                 | M1: Improper Credential Usage            | 9.3        | Critical    |
+| [8.6 Insecure HTTP Connections](#86-insecure-http-connections)                                 | Communicates over HTTP, exposing data to MITM attacks.                     | M5: Insecure Communication               | 9.3        | Critical    |
+| [8.7 Plaintext Transmission of Sensitive Information](#87-plaintext-transmission-of-sensitive-information) | Transmits sensitive data in plaintext, vulnerable to interception.         | M5: Insecure Communication               | 9.3        | Critical    |
+| [8.9 Enumeration of Usernames via Endpoints](#89-enumeration-of-usernames-via-endpoints)       | Server responses reveal valid usernames, leading to enumeration.           | M3: Insecure Authentication/Authorization | 9.3        | Critical    |
+| [8.8 Improper Access Control on Password Change](#88-improper-access-control-on-password-change) | Allows unauthorized users to change another user's password.               | M3: Insecure Authentication/Authorization | 8.6        | High        |
+| [8.11 Binary Patching](#811-binary-patching)                                                   | APK can be modified and reinstalled, bypassing integrity checks.           | M7: Insufficient Binary Protection       | 8.5        | High        |
+| [8.13 Sensitive Information Exposure in Logs](#813-sensitive-information-exposure-in-logs)     | Logs sensitive information in plain text, accessible via logcat.           | M9: Insecure Data Storage                | 8.5        | High        |
+| [8.14 Insecure Content Provider](#814-insecure-content-provider)                               | Content Provider exposes sensitive user data without proper authorization. | M9: Insecure Data Storage                | 8.5        | High        |
+| [8.15 Insecure Broadcast](#815-insecure-broadcast)                                             | Broadcast receiver reveals passwords, triggered by any app.                | M5: Insecure Communication               | 8.5        | High        |
+| [8.5 Bypass of Root Detection](#85-bypass-of-root-detection)                                   | Root detection can be bypassed, exposing app to deeper attacks.            | M7: Insufficient Binary Protection       | 8.4        | High        |
+| [8.10 Bypassing Login to Access PostLogin Activity Directly](#810-bypassing-login-to-access-postlogin-activity-directly) | Allows bypassing login to access protected activities directly.            | M3: Insecure Authentication/Authorization | 8.4        | High        |
+| [8.16 Cross-Site Scripting (XSS) in ViewStatement](#816-cross-site-scripting-xss-in-viewstatement) | WebView is vulnerable to XSS attacks via modified HTML files.              | M5: Insecure Communication               | 8.3        | High        |
+| [8.3 Allow Backup Enabled](#83-allow-backup-enabled)                                           | App data can be backed up via ADB, leading to data leakage.                | M9: Insecure Data Storage                | 7.0        | High        |
+| [8.4 Weak Cryptography in User Data Storage](#84-weak-cryptography-in-user-data-storage)       | Weak encryption used for storing sensitive data in SharedPreferences.      | M9: Insecure Data Storage                | 6.9        | Medium      |
+| [8.2 Debugging Enabled](#82-debugging-enabled)                                                 | App compiled in debug mode, vulnerable to reverse engineering.             | M8: Security Misconfiguration            | 5.1        | Medium      |
+| [8.12 Create User Button Activation through Hidden Value Manipulation](#812-create-user-button-activation-through-hidden-value-manipulation) | Hidden 'Create User' button can be activated through code manipulation.    | M7: Insufficient Binary Protection       | 5.1        | Medium      |
+
+
+
+### 7.5 Recommendations
+
+To mitigate the identified vulnerabilities and enhance the security of the application, the following recommendations are proposed:
+
+- **Eliminate Hardcoded Credentials**: Remove the hardcoded backdoor account and ensure that all user authentication processes are robust and secure. Implement mechanisms that prevent unauthorized access and enforce strong authentication protocols.
+
+- **Encrypt Communications**: Transition from HTTP to HTTPS for all communications between the app and the server. This will protect sensitive data in transit from being intercepted and exploited by attackers. Regularly monitor and enforce the use of secure communication standards.
+
+- **Strengthen Access Control**: Implement strict access control mechanisms across all sensitive activities within the app. Ensure that critical operations, such as password changes, are protected by proper authentication and authorization checks. Incorporate multi-factor authentication (MFA) where applicable.
+
+- **Harden Application Security**: Disable debugging in production environments, reinforce root detection, and ensure that sensitive information is never logged in plain text. Implement stronger binary protection techniques to prevent unauthorized modifications to the app. Regularly review and secure all data storage practices to protect against unauthorized access and exposure.
+
+- **Monitor and Respond to Security Anomalies**: Implement tamper-detection mechanisms to monitor for unusual application behavior that may indicate an attack. Upon detecting such activities, trigger a response such as logging the user out or disabling specific functionalities.
+
+- **Regular Security Audits and Penetration Testing**: Conduct regular security audits and penetration tests to ensure that the application remains secure over time. These tests should focus on identifying new vulnerabilities and ensuring that all previously identified issues have been effectively mitigated.
 
 ## 8. Vulnerabilities
 
@@ -191,7 +257,7 @@ During static analysis using Jadx, the following code snippet was found in the `
 [CWE-489: Active Debug Code](https://cwe.mitre.org/data/definitions/489.html)
 
 **Impact**  
-An attacker can attach a debugger to the app, inspect and modify its runtime behavior, access sensitive data, and bypass security controls, putting the app and user data at significant risk.kal
+An attacker can attach a debugger to the app, inspect and modify its runtime behavior, access sensitive data, and bypass security controls, putting the app and user data at significant risk.
 
 **CVSS v4.0 Score**  
 5.1 / Medium
@@ -228,7 +294,7 @@ The `android:allowBackup` flag is set to `true` in the `AndroidManifest.xml` fil
 [M9: Insecure Data Storage](https://owasp.org/www-project-mobile-top-10/2023-risks/m9-insecure-data-storage.html)
 
 **CWE Reference**  
-[CWE-530: Exposure of Backup File to an Unauthorized Control Sphere](https://cwe.mitre.org/data/definitions/530.html)S
+[CWE-530: Exposure of Backup File to an Unauthorized Control Sphere](https://cwe.mitre.org/data/definitions/530.html)
 
 **Impact**  
 An attacker who gains access to the device or ADB can extract and analyze the backup of the app, leading to the exposure of sensitive user information, including login credentials, private files, and cached data.
@@ -304,7 +370,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:H/VI:L/VA:N/SC:N/SI:N/SA:N
 
 **Description** 
 
-The InsecureBankV2 application implements a basic root detection mechanism in the `PostLogin` activity by checking the existence of the su binary and the Superuser.apk file. This detection can be easily bypassed using tools such as Frida and Objection. By dynamically hooking and modifying the return values of the `doesSUexist()` and `doesSuperuserApkExist()` methods, the app can be tricked into believing that the device is not rooted.
+The application implements a basic root detection mechanism in the `PostLogin` activity by checking the existence of the su binary and the Superuser.apk file. This detection can be easily bypassed using tools such as Frida and Objection. By dynamically hooking and modifying the return values of the `doesSUexist()` and `doesSuperuserApkExist()` methods, the app can be tricked into believing that the device is not rooted.
 
 
 **Evidence**  
@@ -708,7 +774,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
 ### 8.14 Insecure Content Provider
 
 **Description**  
-The `TrackUserContentProvider` in the InsecureBankV2 application is improperly secured, allowing unauthorized access to sensitive user data. Content Providers in Android are components that manage access to a structured set of data. However, when not secured properly, they can expose this data to other apps or malicious actors. In this case, the `TrackUserContentProvider` allows access to sensitive information such as user names, IDs, and potentially other user-related data without requiring proper authentication or authorization.
+The `TrackUserContentProvider` in the application is improperly secured, allowing unauthorized access to sensitive user data. Content Providers in Android are components that manage access to a structured set of data. However, when not secured properly, they can expose this data to other apps or malicious actors. In this case, the `TrackUserContentProvider` allows access to sensitive information such as user names, IDs, and potentially other user-related data without requiring proper authentication or authorization.
 
 **Evidence**  
 
@@ -739,7 +805,7 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 ```
 
 **Mitigation**  
-- Implement Proper Authentication and Authorization: Ensure that the T`rackUserContentProvider` requires proper authentication and authorization before allowing any access to its data. This can be achieved by implementing permission checks and restricting access to only trusted applications.
+- Implement Proper Authentication and Authorization: Ensure that the `TrackUserContentProvider` requires proper authentication and authorization before allowing any access to its data. This can be achieved by implementing permission checks and restricting access to only trusted applications.
 
 - Encrypt Sensitive Data: Encrypt any sensitive data stored within the content provider to add an additional layer of security, ensuring that even if access is obtained, the data remains secure.
 
@@ -853,56 +919,6 @@ CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:A/VC:H/VI:H/VA:N/SC:L/SI:L/SA:N
 - Use Internal Storage: Avoid storing sensitive files like statements in external storage, where they can be modified by other applications. Instead, store them in a secure internal storage location.
 - Content Security Policy (CSP): Implement a Content Security Policy to restrict the sources from which JavaScript can be loaded and executed within the WebView.
 - Review WebView Configuration: Audit and configure WebView settings to minimize exposure, such as disabling form autofill and restricting access to potentially dangerous APIs.
-
-
-### 8.17
-
-
-**Description**  
-
-
-**Evidence**  
-
-**OWASP Mobile Top 10 Reference**  
-[]()
-
-**CWE Reference**  
-[]()
-
-**Impact**  
-
-
-**CVSS v4.0 Score**  
-
-
-**Mitigation**  
-
-
-
-### 8.18 
-
-
-**Description**  
-
-
-**Evidence**  
-
-**OWASP Mobile Top 10 Reference**  
-[]()
-
-**CWE Reference**  
-[]()
-
-**Impact**  
-
-
-**CVSS v4.0 Score**  
-
-
-**Mitigation**  
-
-
-
 
 ---
 **Author: Pedro Coelho** 
