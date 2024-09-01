@@ -33,7 +33,7 @@
 
 ## 1. Introduction
 
-This report details the results of a penetration test conducted by **Pedro Coelho** on the **[InsecureBankv2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 to 31 of August, 2024. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
+This report details the results of a penetration test conducted on the **[InsecureBankv2](https://github.com/dineshshetty/Android-InsecureBankv2)** Android application from 15 to 31 of August, 2024. The goal of this assessment was to uncover potential security vulnerabilities and evaluate the application’s overall security posture. Key areas of focus included static and dynamic analysis, network communications, and code vulnerabilities. Each finding is categorized and accompanied by mitigation recommendations to help improve the security of the application.
 
 ## 2. Methodology
 
